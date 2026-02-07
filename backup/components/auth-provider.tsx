@@ -20,16 +20,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check current session
-    supabaseBrowser.auth.getSession().then(({ data: { session } }: { data: { session: { user: { id: string } } | null } }) => {
+    supabaseBrowser.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
+    }).catch(error => {
+      console.error('Session check error:', error);
+      setLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
+    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -50,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
+        console.error('Profile fetch error:', error);
         // Profile might not exist yet, create it
         const { data: authUser } = await supabaseBrowser.auth.getUser();
         if (authUser.user) {
