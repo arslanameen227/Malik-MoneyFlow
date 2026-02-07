@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { supabaseBrowser } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 export default function ResetPasswordPage() {
   const { updatePassword } = useAuth();
@@ -17,21 +17,34 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
-  const searchParams = useSearchParams();
-  const hasToken = searchParams.has('code') || searchParams.has('token');
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
-    // Check if we have a valid session/token
-    if (!hasToken && typeof window !== 'undefined') {
-      // If no token, redirect to forgot password
-      // This is handled silently - the form will show but won't work
+    // Check for token in URL hash (Supabase sends it as #access_token=...)
+    const hash = window.location.hash;
+    const accessToken = hash.match(/access_token=([^&]*)/)?.[1];
+    const refreshToken = hash.match(/refresh_token=([^&]*)/)?.[1];
+    const type = hash.match(/type=([^&]*)/)?.[1];
+
+    if (accessToken) {
+      setHasToken(true);
+      // Set the session from the hash fragment
+      supabaseBrowser.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      }).then(({ error }) => {
+        if (error) {
+          setError('Invalid or expired reset link. Please request a new one.');
+        }
+      });
+    } else {
+      setError('No reset token found. Please request a new password reset link.');
     }
-  }, [hasToken]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -50,6 +63,8 @@ export default function ResetPasswordPage() {
       setError(error);
     } else {
       setSuccess(true);
+      // Clear the hash from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     setIsLoading(false);
@@ -86,6 +101,12 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
@@ -96,6 +117,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={!hasToken}
               />
             </div>
             <div className="space-y-2">
@@ -107,10 +129,10 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={!hasToken}
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !hasToken}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

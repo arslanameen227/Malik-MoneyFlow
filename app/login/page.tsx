@@ -1,19 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { supabaseBrowser } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
@@ -23,6 +25,31 @@ export default function LoginPage() {
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+
+  useEffect(() => {
+    // Handle email verification token from URL hash
+    const hash = window.location.hash;
+    const accessToken = hash.match(/access_token=([^&]*)/)?.[1];
+    const refreshToken = hash.match(/refresh_token=([^&]*)/)?.[1];
+    const type = hash.match(/type=([^&]*)/)?.[1];
+
+    if (accessToken && type === 'signup') {
+      setIsLoading(true);
+      supabaseBrowser.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      }).then(({ error }: { error: Error | null }) => {
+        if (error) {
+          setError('Verification failed. Please try again or contact support.');
+        } else {
+          setVerified(true);
+          // Clear the hash from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        setIsLoading(false);
+      });
+    }
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
