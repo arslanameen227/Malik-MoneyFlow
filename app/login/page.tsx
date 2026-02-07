@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { supabaseBrowser } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -8,23 +8,31 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+
+// Message type for better UX
+interface Message {
+  type: 'success' | 'error' | 'info';
+  text: string;
+}
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<Message | null>(null);
   const [verified, setVerified] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
 
-  // Login form
+  // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Register form
+  // Register form state
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   useEffect(() => {
     // Handle email verification token from URL hash
@@ -40,10 +48,9 @@ export default function LoginPage() {
         refresh_token: refreshToken || '',
       }).then(({ error }: { error: Error | null }) => {
         if (error) {
-          setError('Verification failed. Please try again or contact support.');
+          setMessage({ type: 'error', text: 'Verification failed. Please try again or contact support.' });
         } else {
           setVerified(true);
-          // Clear the hash from URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
         setIsLoading(false);
@@ -54,11 +61,11 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setMessage(null);
 
     const { error } = await signIn(loginEmail, loginPassword);
     if (error) {
-      setError(error);
+      setMessage({ type: 'error', text: error });
     }
 
     setIsLoading(false);
@@ -67,16 +74,15 @@ export default function LoginPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setMessage(null);
 
     const { error, existingAccount } = await signUp(registerEmail, registerPassword, registerName);
     if (error) {
-      setError(error);
+      setMessage({ type: 'error', text: error });
     } else if (existingAccount) {
-      // This shouldn't happen as error is set, but handle just in case
-      setError('An account with this email already exists. Please sign in instead.');
+      setMessage({ type: 'error', text: 'An account with this email already exists. Please sign in instead.' });
     } else {
-      setError('Account created! Please check your email to verify.');
+      setMessage({ type: 'success', text: 'Account created! Please check your email to verify.' });
     }
 
     setIsLoading(false);
@@ -117,9 +123,9 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              {error && (
+              {message?.type === 'error' && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-600">{error}</p>
+                  <p className="text-sm text-red-600">{message.text}</p>
                 </div>
               )}
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -185,9 +191,9 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
-                {error && (
+                {message?.type === 'error' && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-600">{error}</p>
+                    <p className="text-sm text-red-600">{message.text}</p>
                   </div>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -238,10 +244,10 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className={`text-sm ${error.includes('created') ? 'text-green-600' : 'text-red-600'}`}>
-                      {error}
+                {message && (
+                  <div className={`p-3 border rounded-md ${message.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                      {message.text}
                     </p>
                   </div>
                 )}
