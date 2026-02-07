@@ -5,7 +5,12 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create custom types
+-- Create custom types (drop first if exists to avoid conflicts)
+DROP TYPE IF EXISTS account_type CASCADE;
+DROP TYPE IF EXISTS transaction_type CASCADE;
+DROP TYPE IF EXISTS fee_type CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;
+
 CREATE TYPE account_type AS ENUM ('cash', 'bank', 'wallet');
 CREATE TYPE transaction_type AS ENUM (
   'cash_in',
@@ -22,6 +27,24 @@ CREATE TYPE transaction_type AS ENUM (
 );
 CREATE TYPE fee_type AS ENUM ('percentage', 'fixed');
 CREATE TYPE user_role AS ENUM ('admin', 'user');
+
+-- Drop existing tables if they exist (clean install)
+DROP TABLE IF EXISTS activity_logs CASCADE;
+DROP TABLE IF EXISTS settings CASCADE;
+DROP TABLE IF EXISTS daily_summaries CASCADE;
+DROP TABLE IF EXISTS cash_positions CASCADE;
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS customer_accounts CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
+-- Drop existing functions and triggers
+DROP FUNCTION IF EXISTS update_account_balance() CASCADE;
+DROP FUNCTION IF EXISTS update_cash_position() CASCADE;
+DROP FUNCTION IF EXISTS update_daily_summary() CASCADE;
+DROP FUNCTION IF EXISTS log_activity() CASCADE;
+DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
 
 -- User profiles table (for additional user info)
 CREATE TABLE profiles (
