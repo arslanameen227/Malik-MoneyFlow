@@ -105,6 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabaseBrowser.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: typeof window !== 'undefined' 
+            ? `${window.location.origin}/login`
+            : 'https://malik-moneyflow.vercel.app/login',
+        },
       });
 
       if (error) {

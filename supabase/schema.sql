@@ -167,6 +167,18 @@ BEGIN
     UPDATE accounts SET current_balance = current_balance + NEW.amount 
     WHERE id = NEW.to_account_id;
   
+  -- For cash_in_physical: Add physical cash to cash box
+  -- Only cash account increases, no bank involved
+  ELSIF NEW.type = 'cash_in_physical' THEN
+    UPDATE accounts SET current_balance = current_balance + NEW.amount 
+    WHERE user_id = NEW.user_id AND type = 'cash';
+  
+  -- For cash_out_physical: Remove physical cash from cash box
+  -- Only cash account decreases, no bank involved
+  ELSIF NEW.type = 'cash_out_physical' THEN
+    UPDATE accounts SET current_balance = current_balance - NEW.amount 
+    WHERE user_id = NEW.user_id AND type = 'cash';
+  
   -- For account_transfer: Decrease from, increase to
   ELSIF NEW.type = 'account_transfer' THEN
     UPDATE accounts SET current_balance = current_balance - NEW.amount WHERE id = NEW.from_account_id;
@@ -210,8 +222,18 @@ BEGIN
   v_date := NEW.transaction_date;
   
   -- For cash_in: Customer gives cash, we send to their account
-  -- Cash decreases
+  -- Cash increases (we received cash)
   IF NEW.type = 'cash_in' THEN
+    INSERT INTO cash_positions (user_id, date, total_cash_received)
+    VALUES (v_user_id, v_date, NEW.amount)
+    ON CONFLICT (user_id, date)
+    DO UPDATE SET 
+      total_cash_received = cash_positions.total_cash_received + NEW.amount,
+      updated_at = NOW();
+  
+  -- For cash_out: Customer sends to our account, we give cash
+  -- Cash decreases (we gave cash)
+  ELSIF NEW.type = 'cash_out' THEN
     INSERT INTO cash_positions (user_id, date, total_cash_given)
     VALUES (v_user_id, v_date, NEW.amount)
     ON CONFLICT (user_id, date)
@@ -219,14 +241,24 @@ BEGIN
       total_cash_given = cash_positions.total_cash_given + NEW.amount,
       updated_at = NOW();
   
-  -- For cash_out: Customer sends to our account, we give cash
-  -- Cash increases
-  ELSIF NEW.type = 'cash_out' THEN
+  -- For cash_in_physical: Add physical cash to cash box
+  -- Cash received increases
+  ELSIF NEW.type = 'cash_in_physical' THEN
     INSERT INTO cash_positions (user_id, date, total_cash_received)
     VALUES (v_user_id, v_date, NEW.amount)
     ON CONFLICT (user_id, date)
     DO UPDATE SET 
       total_cash_received = cash_positions.total_cash_received + NEW.amount,
+      updated_at = NOW();
+  
+  -- For cash_out_physical: Remove physical cash from cash box
+  -- Cash given increases
+  ELSIF NEW.type = 'cash_out_physical' THEN
+    INSERT INTO cash_positions (user_id, date, total_cash_given)
+    VALUES (v_user_id, v_date, NEW.amount)
+    ON CONFLICT (user_id, date)
+    DO UPDATE SET 
+      total_cash_given = cash_positions.total_cash_given + NEW.amount,
       updated_at = NOW();
   END IF;
   

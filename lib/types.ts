@@ -1,7 +1,9 @@
 export type AccountType = 'cash' | 'bank' | 'wallet';
 export type TransactionType = 
-  | 'cash_in'           // Receive cash → Send to customer account
-  | 'cash_out'          // Receive in account → Give cash to customer
+  | 'cash_in'           // Receive cash from customer → Send to their bank/wallet
+  | 'cash_out'          // Receive in bank/wallet → Give cash to customer
+  | 'cash_in_physical'  // Add physical cash to cash box (no bank involved)
+  | 'cash_out_physical' // Remove physical cash from cash box (no bank involved)
   | 'account_transfer'  // Transfer between own accounts
   | 'loan_given'        // Loan given to customer
   | 'loan_received'     // Loan received from customer

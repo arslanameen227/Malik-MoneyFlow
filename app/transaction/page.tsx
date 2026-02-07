@@ -41,6 +41,18 @@ const transactionTypes: { value: TransactionType; label: string; icon: React.Ele
     description: 'Receive in bank/wallet → Give cash to customer'
   },
   { 
+    value: 'cash_in_physical', 
+    label: 'Cash In (Physical Money)', 
+    icon: Banknote,
+    description: 'Add physical cash to cash box (no bank involved)'
+  },
+  { 
+    value: 'cash_out_physical', 
+    label: 'Cash Out (Physical Money)', 
+    icon: Wallet,
+    description: 'Remove physical cash from cash box (no bank involved)'
+  },
+  { 
     value: 'account_transfer', 
     label: 'Transfer Between Accounts', 
     icon: ArrowRightLeft,
