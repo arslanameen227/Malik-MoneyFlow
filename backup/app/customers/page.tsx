@@ -13,6 +13,7 @@ import {
   isOnline 
 } from '@/lib/offline-storage';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -90,11 +91,12 @@ export default function CustomersPage() {
     try {
       let customerId: string;
       if (isOnline()) {
-        const { data, error } = await supabaseBrowser.from('customers').insert(customerData).select().single();
+        const { data, error } = await supabaseBrowser.from('customers').insert(customerData).select();
         if (error) throw error;
-        customerId = data.id;
-        await saveLocalCustomer(data);
-        setCustomers(prev => [...prev, data]);
+        if (!data || data.length === 0) throw new Error('No data returned');
+        customerId = data[0].id;
+        await saveLocalCustomer(data[0]);
+        setCustomers(prev => [...prev, data[0]]);
       } else {
         customerId = `temp-${Date.now()}`;
         const offlineCustomer = { ...customerData, id: customerId, created_at: new Date().toISOString() };
@@ -105,10 +107,10 @@ export default function CustomersPage() {
       if (accountNumber) {
         const accountData = { customer_id: customerId, account_title: accountTitle || name, account_number: accountNumber, bank_name: bankName || 'Bank', type: 'bank' as const };
         if (isOnline()) {
-          const { data: accData } = await supabaseBrowser.from('customer_accounts').insert(accountData).select().single();
-          if (accData) {
-            await saveLocalCustomerAccount(accData);
-            setCustomerAccounts(prev => ({ ...prev, [customerId]: [...(prev[customerId] || []), accData] }));
+          const { data: accData } = await supabaseBrowser.from('customer_accounts').insert(accountData).select();
+          if (accData && accData.length > 0) {
+            await saveLocalCustomerAccount(accData[0]);
+            setCustomerAccounts(prev => ({ ...prev, [customerId]: [...(prev[customerId] || []), accData[0]] }));
           }
         } else {
           const offlineAccount = { ...accountData, id: `temp-acc-${Date.now()}`, created_at: new Date().toISOString() };
@@ -118,8 +120,10 @@ export default function CustomersPage() {
       }
 
       setName(''); setPhone(''); setFeeType('fixed'); setFeeValue(''); setAccountTitle(''); setAccountNumber(''); setBankName(''); setIsCreateOpen(false);
-    } catch (error) {
+      toast.success(`Customer "${customerData.name}" created successfully!`);
+    } catch (error: any) {
       console.error('Error creating customer:', error);
+      toast.error(error.message || 'Failed to create customer. Please try again.');
     }
   }
 

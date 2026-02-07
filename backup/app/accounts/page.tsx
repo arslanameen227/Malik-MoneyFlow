@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Wallet, Building2, Banknote, Loader2, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function AccountsPage() {
   const { user } = useAuth();
@@ -105,13 +106,12 @@ export default function AccountsPage() {
         const { data, error } = await supabaseBrowser
           .from('accounts')
           .insert(newAccount)
-          .select()
-          .single();
+          .select();
 
         if (error) throw error;
-        if (data) {
-          await saveLocalAccount(data);
-          setAccounts(prev => [data, ...prev]);
+        if (data && data.length > 0) {
+          await saveLocalAccount(data[0]);
+          setAccounts(prev => [data[0], ...prev]);
         }
       } else {
         // Offline: create with temporary ID
@@ -131,8 +131,10 @@ export default function AccountsPage() {
       setAccountNumber('');
       setProvider('');
       setIsCreateOpen(false);
-    } catch (error) {
+      toast.success(`Account "${newAccount.name}" created successfully!`);
+    } catch (error: any) {
       console.error('Error creating account:', error);
+      toast.error(error.message || 'Failed to create account. Please try again.');
     }
   }
 

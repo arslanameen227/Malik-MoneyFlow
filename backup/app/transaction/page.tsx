@@ -294,14 +294,15 @@ export default function TransactionPage() {
         };
 
         if (isOnline()) {
-          const { data: accData } = await supabaseBrowser
+          const { data: accData, error: accError } = await supabaseBrowser
             .from('customer_accounts')
             .insert(accountData)
-            .select()
-            .single();
+            .select();
           
-          if (accData) {
-            await saveLocalCustomerAccount(accData);
+          if (accError) {
+            console.error('Error creating customer account:', accError);
+          } else if (accData && accData.length > 0) {
+            await saveLocalCustomerAccount(accData[0]);
           }
         } else {
           await saveLocalCustomerAccount({
