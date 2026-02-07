@@ -46,12 +46,13 @@ export default function ForgotPasswordPage() {
               Click the link in the email to reset your password. If you don&apos;t see the email, check your spam folder.
             </p>
             <Button asChild className="w-full">
-              <span 
-                onClick={() => window.location.href = '/login'}
+              <button 
+                type="button"
+                onClick={() => window.location.href = '/login/'}
                 className="cursor-pointer"
               >
                 Back to Login
-              </span>
+              </button>
             </Button>
           </CardContent>
         </Card>
@@ -98,12 +99,13 @@ export default function ForgotPasswordPage() {
               )}
             </Button>
             <div className="text-center">
-              <span 
-                onClick={() => window.location.href = '/login'}
-                className="text-sm text-muted-foreground hover:underline cursor-pointer"
+              <button 
+                type="button"
+                onClick={() => window.location.href = '/login/'}
+                className="text-sm text-muted-foreground hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Back to Login
-              </span>
+              </button>
             </div>
           </form>
         </CardContent>

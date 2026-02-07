@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: 'https://malik-moneyflow.vercel.app/login',
+          emailRedirectTo: 'https://malik-moneyflow.vercel.app/login/',
         },
       });
 
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function resetPassword(email: string): Promise<{ error: string | null }> {
     try {
       const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://malik-moneyflow.vercel.app/reset-password',
+        redirectTo: 'https://malik-moneyflow.vercel.app/reset-password/',
       });
       return { error: error?.message || null };
     } catch (error) {

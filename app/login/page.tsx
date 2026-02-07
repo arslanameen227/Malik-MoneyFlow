@@ -173,12 +173,13 @@ export default function LoginPage() {
                     required
                   />
                   <div className="text-right">
-                    <span 
-                      onClick={() => window.location.href = '/forgot-password'}
-                      className="text-sm text-primary hover:underline cursor-pointer inline-block"
+                    <button 
+                      type="button"
+                      onClick={() => window.location.href = '/forgot-password/'}
+                      className="text-sm text-primary hover:underline inline-block bg-transparent border-0 p-0 cursor-pointer"
                     >
                       Forgot Password?
-                    </span>
+                    </button>
                   </div>
                 </div>
                 {error && (
