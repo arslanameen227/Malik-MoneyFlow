@@ -15,9 +15,9 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import LoginPage from '@/app/login/page';
+import { useEffect } from 'react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -28,7 +28,6 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
-// Public routes that don't require authentication
 const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 export default function AppLayout({
@@ -38,9 +37,15 @@ export default function AppLayout({
 }) {
   const { user, loading, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Check if current route is public
   const isPublicRoute = publicRoutes.some(route => pathname?.startsWith(route));
+
+  useEffect(() => {
+    if (!loading && !user && !isPublicRoute) {
+      router.push('/login');
+    }
+  }, [user, loading, isPublicRoute, router]);
 
   if (loading) {
     return (
@@ -50,19 +55,20 @@ export default function AppLayout({
     );
   }
 
-  // Allow public routes to render their own content
+  if (!user && !isPublicRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!user && isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Redirect to login if not authenticated and not on public route
-  if (!user) {
-    return <LoginPage />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile header */}
       <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-50">
         <span className="font-semibold text-lg">Money Trade</span>
         <Sheet>
@@ -78,12 +84,10 @@ export default function AppLayout({
       </div>
 
       <div className="flex">
-        {/* Desktop sidebar */}
         <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r">
           <DesktopSidebar user={user} onSignOut={signOut} />
         </div>
 
-        {/* Main content */}
         <div className="flex-1 lg:ml-64">
           <main className="p-4 lg:p-8">
             {children}
