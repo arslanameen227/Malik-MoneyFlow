@@ -429,8 +429,7 @@ export default function TransactionPage() {
   const showCustomer = ['cash_in', 'cash_out', 'loan_given', 'loan_received', 'cash_out_personal', 'cash_in_personal'].includes(transactionType);
   const showFromAccount = ['cash_in', 'account_transfer', 'loan_given', 'expense', 'cash_out_personal'].includes(transactionType) || 
     (transactionType === 'cash_in_personal' && subcategory === 'digital');
-  const showToAccount = ['cash_out', 'account_transfer', 'loan_received', 'income', 'cash_in_personal'].includes(transactionType) || 
-    (transactionType === 'cash_out_personal' && subcategory === 'digital');
+  const showToAccount = ['cash_out', 'account_transfer', 'loan_received', 'income', 'cash_in_personal'].includes(transactionType);
   const showFee = showCustomer;
   const showSubcategory = isPersonalTransaction;
   const showPersonalFromAccount = isPersonalTransaction && subcategory === 'physical' && transactionType === 'cash_out_personal';
