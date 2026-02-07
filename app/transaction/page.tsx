@@ -54,6 +54,18 @@ const transactionTypes: { value: TransactionType; label: string; icon: React.Ele
     description: 'Remove physical cash from cash box (no bank involved)'
   },
   { 
+    value: 'cash_in_personal', 
+    label: 'Cash In (Personal)', 
+    icon: Banknote,
+    description: 'Personal cash in - Physical or Digital'
+  },
+  { 
+    value: 'cash_out_personal', 
+    label: 'Cash Out (Personal)', 
+    icon: Wallet,
+    description: 'Personal cash out - Physical or Digital'
+  },
+  { 
     value: 'account_transfer', 
     label: 'Transfer Between Accounts', 
     icon: ArrowRightLeft,
@@ -95,6 +107,7 @@ export default function TransactionPage() {
 
   // Transaction form state
   const [transactionType, setTransactionType] = useState<TransactionType>('cash_in');
+  const [subcategory, setSubcategory] = useState<'physical' | 'digital'>('physical');
   const [amount, setAmount] = useState('');
   const [fee, setFee] = useState('');
   const [description, setDescription] = useState('');
@@ -324,6 +337,7 @@ export default function TransactionPage() {
     setDescription('');
     setFromAccountId('');
     setToAccountId('');
+    setSubcategory('physical');
     setSelectedCustomer(null);
     setSelectedCustomerAccount(null);
     setCustomerInput('');
@@ -360,6 +374,7 @@ export default function TransactionPage() {
       const transactionData = {
         user_id: user.id,
         type: transactionType,
+        subcategory: isPersonalTransaction ? subcategory : null,
         from_account_id: fromAccountId || null,
         to_account_id: toAccountId || null,
         customer_id: selectedCustomer?.id || null,
@@ -410,10 +425,16 @@ export default function TransactionPage() {
   }
 
   // Determine which fields to show based on transaction type
+  const isPersonalTransaction = ['cash_in_personal', 'cash_out_personal'].includes(transactionType);
   const showCustomer = ['cash_in', 'cash_out', 'loan_given', 'loan_received'].includes(transactionType);
-  const showFromAccount = ['cash_in', 'account_transfer', 'loan_given', 'expense'].includes(transactionType);
-  const showToAccount = ['cash_out', 'account_transfer', 'loan_received', 'income'].includes(transactionType);
+  const showFromAccount = ['cash_in', 'account_transfer', 'loan_given', 'expense', 'cash_out_personal'].includes(transactionType) || 
+    (transactionType === 'cash_in_personal' && subcategory === 'digital');
+  const showToAccount = ['cash_out', 'account_transfer', 'loan_received', 'income', 'cash_in_personal'].includes(transactionType) || 
+    (transactionType === 'cash_out_personal' && subcategory === 'digital');
   const showFee = showCustomer;
+  const showSubcategory = isPersonalTransaction;
+  const showPersonalFromAccount = isPersonalTransaction && subcategory === 'physical' && transactionType === 'cash_out_personal';
+  const showPersonalToAccount = isPersonalTransaction && subcategory === 'digital';
 
   if (loading) {
     return (
@@ -486,6 +507,27 @@ export default function TransactionPage() {
                 required
               />
             </div>
+
+            {/* Subcategory for Personal Transactions */}
+            {showSubcategory && (
+              <div className="space-y-2">
+                <Label>Subcategory</Label>
+                <Select value={subcategory} onValueChange={(v) => setSubcategory(v as 'physical' | 'digital')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="physical">Physical Cash (Cash on Hand)</SelectItem>
+                    <SelectItem value="digital">Digital Cash (Bank/Wallet)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {subcategory === 'physical' 
+                    ? 'Physical cash will be added/removed from Cash on Hand automatically'
+                    : 'Select a bank account or wallet to receive digital cash'}
+                </p>
+              </div>
+            )}
 
             {/* Customer Selection */}
             {showCustomer && (
@@ -627,14 +669,22 @@ export default function TransactionPage() {
                     <SelectValue placeholder="Select account..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        <div className="flex justify-between items-center w-full">
-                          <span>{account.name}</span>
-                          <span className="text-muted-foreground ml-4">{formatCurrency(account.current_balance)}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {accounts
+                      .filter(a => {
+                        // For personal digital cash in, only show bank and wallet accounts (not cash)
+                        if (transactionType === 'cash_in_personal' && subcategory === 'digital') {
+                          return a.type !== 'cash';
+                        }
+                        return true;
+                      })
+                      .map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          <div className="flex justify-between items-center w-full">
+                            <span>{account.name}</span>
+                            <span className="text-muted-foreground ml-4">{formatCurrency(account.current_balance)}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -649,14 +699,22 @@ export default function TransactionPage() {
                     <SelectValue placeholder="Select account..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        <div className="flex justify-between items-center w-full">
-                          <span>{account.name}</span>
-                          <span className="text-muted-foreground ml-4">{formatCurrency(account.current_balance)}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {accounts
+                      .filter(a => {
+                        // For personal digital cash out, only show bank and wallet accounts (not cash)
+                        if (transactionType === 'cash_out_personal' && subcategory === 'digital') {
+                          return a.type !== 'cash';
+                        }
+                        return true;
+                      })
+                      .map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          <div className="flex justify-between items-center w-full">
+                            <span>{account.name}</span>
+                            <span className="text-muted-foreground ml-4">{formatCurrency(account.current_balance)}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

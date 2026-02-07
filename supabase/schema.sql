@@ -8,6 +8,8 @@ CREATE TYPE transaction_type AS ENUM (
   'cash_out',
   'cash_in_physical',
   'cash_out_physical',
+  'cash_in_personal',
+  'cash_out_personal',
   'account_transfer',
   'loan_given',
   'loan_received',
@@ -59,6 +61,7 @@ CREATE TABLE transactions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type transaction_type NOT NULL,
+  subcategory VARCHAR(20) CHECK (subcategory IN ('physical', 'digital')),
   from_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
   to_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
   customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
@@ -181,6 +184,32 @@ BEGIN
     UPDATE accounts SET current_balance = current_balance - NEW.amount 
     WHERE user_id = NEW.user_id AND type = 'cash';
   
+  -- For cash_in_personal: Personal cash in
+  -- Physical: Add to Cash on Hand | Digital: Add to selected account
+  ELSIF NEW.type = 'cash_in_personal' THEN
+    IF NEW.subcategory = 'physical' THEN
+      -- Physical cash - add to Cash on Hand
+      UPDATE accounts SET current_balance = current_balance + NEW.amount 
+      WHERE user_id = NEW.user_id AND type = 'cash';
+    ELSIF NEW.subcategory = 'digital' THEN
+      -- Digital cash - add to selected account (bank/wallet)
+      UPDATE accounts SET current_balance = current_balance + NEW.amount 
+      WHERE id = NEW.to_account_id;
+    END IF;
+  
+  -- For cash_out_personal: Personal cash out
+  -- Physical: Remove from Cash on Hand | Digital: Remove from selected account
+  ELSIF NEW.type = 'cash_out_personal' THEN
+    IF NEW.subcategory = 'physical' THEN
+      -- Physical cash - remove from Cash on Hand
+      UPDATE accounts SET current_balance = current_balance - NEW.amount 
+      WHERE user_id = NEW.user_id AND type = 'cash';
+    ELSIF NEW.subcategory = 'digital' THEN
+      -- Digital cash - remove from selected account (bank/wallet)
+      UPDATE accounts SET current_balance = current_balance - NEW.amount 
+      WHERE id = NEW.from_account_id;
+    END IF;
+  
   -- For account_transfer: Decrease from, increase to
   ELSIF NEW.type = 'account_transfer' THEN
     UPDATE accounts SET current_balance = current_balance - NEW.amount WHERE id = NEW.from_account_id;
@@ -256,6 +285,24 @@ BEGIN
   -- For cash_out_physical: Remove physical cash from cash box
   -- Cash given increases
   ELSIF NEW.type = 'cash_out_physical' THEN
+    INSERT INTO cash_positions (user_id, date, total_cash_given)
+    VALUES (v_user_id, v_date, NEW.amount)
+    ON CONFLICT (user_id, date)
+    DO UPDATE SET 
+      total_cash_given = cash_positions.total_cash_given + NEW.amount,
+      updated_at = NOW();
+  
+  -- For cash_in_personal with physical subcategory: Add to Cash on Hand
+  ELSIF NEW.type = 'cash_in_personal' AND NEW.subcategory = 'physical' THEN
+    INSERT INTO cash_positions (user_id, date, total_cash_received)
+    VALUES (v_user_id, v_date, NEW.amount)
+    ON CONFLICT (user_id, date)
+    DO UPDATE SET 
+      total_cash_received = cash_positions.total_cash_received + NEW.amount,
+      updated_at = NOW();
+  
+  -- For cash_out_personal with physical subcategory: Remove from Cash on Hand
+  ELSIF NEW.type = 'cash_out_personal' AND NEW.subcategory = 'physical' THEN
     INSERT INTO cash_positions (user_id, date, total_cash_given)
     VALUES (v_user_id, v_date, NEW.amount)
     ON CONFLICT (user_id, date)

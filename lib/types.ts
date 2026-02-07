@@ -4,6 +4,8 @@ export type TransactionType =
   | 'cash_out'          // Receive in bank/wallet → Give cash to customer
   | 'cash_in_physical'  // Add physical cash to cash box (no bank involved)
   | 'cash_out_physical' // Remove physical cash from cash box (no bank involved)
+  | 'cash_in_personal'  // Personal cash in (Physical/Digital)
+  | 'cash_out_personal' // Personal cash out (Physical/Digital)
   | 'account_transfer'  // Transfer between own accounts
   | 'loan_given'        // Loan given to customer
   | 'loan_received'     // Loan received from customer
@@ -46,6 +48,7 @@ export interface CustomerAccount {
 export interface Transaction {
   id: string;
   type: TransactionType;
+  subcategory?: 'physical' | 'digital' | null;  // For cash_in_personal and cash_out_personal
   from_account_id?: string | null;
   to_account_id?: string | null;
   customer_id?: string | null;

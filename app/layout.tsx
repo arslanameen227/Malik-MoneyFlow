@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Money Trade Manager",
-  description: "Manage your money trade shop cashflow",
+  title: "Malik Cash Flow",
+  description: "Manage your cash flow",
 };
 
 export default function RootLayout({
