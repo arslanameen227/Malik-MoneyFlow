@@ -201,13 +201,9 @@ export default function LoginPage() {
                 </Button>
               </form>
               <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => { window.location.href = '/forgot-password'; }}
-                  className="text-sm text-primary hover:underline bg-transparent border-0 cursor-pointer"
-                >
+                <a href="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot Password?
-                </button>
+                </a>
               </div>
             </TabsContent>
 
