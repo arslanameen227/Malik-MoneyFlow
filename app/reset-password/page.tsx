@@ -26,11 +26,24 @@ export default function ResetPasswordPage() {
   const [tokenValid, setTokenValid] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const type = params.get('type');
+    // Check both query params (?code=) and hash fragment (#access_token=)
+    const url = new URL(window.location.href);
+    
+    // Try query params first (?code=)
+    let accessToken = url.searchParams.get('code');
+    let refreshToken = url.searchParams.get('refresh_token') || '';
+    let type = url.searchParams.get('type');
+    
+    // If not in query, try hash fragment (#access_token=)
+    if (!accessToken) {
+      const hash = window.location.hash;
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        accessToken = hashParams.get('access_token');
+        refreshToken = hashParams.get('refresh_token') || '';
+        type = hashParams.get('type');
+      }
+    }
 
     if (!accessToken) {
       setMessage({ type: 'error', text: 'No reset token found. Please request a new password reset link.' });
@@ -38,11 +51,11 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    // Set the session from the hash fragment
+    // Set the session from the token
     supabaseBrowser.auth
       .setSession({
         access_token: accessToken,
-        refresh_token: refreshToken || '',
+        refresh_token: refreshToken,
       })
       .then(({ error }: { error: Error | null }) => {
         if (error) {
