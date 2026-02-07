@@ -236,8 +236,8 @@ export default function TransactionPage() {
   }
 
   function handleCreateNewCustomer() {
-    if (!customerInput.trim()) return;
-    setNewCustomerName(customerInput);
+    const name = customerInput.trim() || 'New Customer';
+    setNewCustomerName(name);
     setIsNewCustomerOpen(true);
     setCustomerSearchOpen(false);
   }
@@ -570,9 +570,10 @@ export default function TransactionPage() {
                                 variant="ghost" 
                                 className="w-full justify-start gap-2"
                                 onClick={handleCreateNewCustomer}
+                                type="button"
                               >
                                 <Plus className="h-4 w-4" />
-                                Add "{customerInput}" as new customer
+                                {customerInput.trim() ? `Add "${customerInput}" as new customer` : 'Add new customer'}
                               </Button>
                             </div>
                           </CommandEmpty>
