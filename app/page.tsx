@@ -128,6 +128,23 @@ export default function DashboardPage() {
       (t.type === 'cash_out_personal' && t.subcategory === 'physical'))
     .reduce((sum, t) => sum + t.amount, 0);
   
+  // Detailed breakdowns
+  const cashInPersonal = todayTransactions
+    .filter(t => t.type === 'cash_in_personal')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const cashOutPersonal = todayTransactions
+    .filter(t => t.type === 'cash_out_personal')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const cashInSendToCustomer = todayTransactions
+    .filter(t => t.type === 'cash_in')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const cashOutReceiveFromCustomer = todayTransactions
+    .filter(t => t.type === 'cash_out')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
   const totalFees = todayTransactions.reduce((sum, t) => sum + t.fee_amount, 0);
 
   // Calculate account totals
@@ -235,6 +252,69 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Physical cash available
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Breakdown Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cash In (Personal)</CardTitle>
+            <ArrowDownRight className="h-4 w-4 text-teal-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-teal-600">
+              {formatCurrency(cashInPersonal)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              From {todayTransactions.filter(t => t.type === 'cash_in_personal').length} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cash Out (Personal)</CardTitle>
+            <ArrowUpRight className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {formatCurrency(cashOutPersonal)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              From {todayTransactions.filter(t => t.type === 'cash_out_personal').length} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cash In (Send to Customer)</CardTitle>
+            <ArrowDownRight className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(cashInSendToCustomer)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              From {todayTransactions.filter(t => t.type === 'cash_in').length} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cash Out (Received from Customer)</CardTitle>
+            <ArrowUpRight className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {formatCurrency(cashOutReceiveFromCustomer)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              From {todayTransactions.filter(t => t.type === 'cash_out').length} transactions
             </p>
           </CardContent>
         </Card>
