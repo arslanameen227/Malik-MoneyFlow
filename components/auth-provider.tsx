@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check current session
-    supabaseBrowser.auth.getSession().then(({ data: { session } }) => {
+    supabaseBrowser.auth.getSession().then(({ data: { session } }: { data: { session: { user: { id: string } } | null } }) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
