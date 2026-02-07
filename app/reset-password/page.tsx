@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
       supabaseBrowser.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken || '',
-      }).then(({ error }) => {
+      }).then(({ error }: { error: Error | null }) => {
         if (error) {
           setError('Invalid or expired reset link. Please request a new one.');
         }
