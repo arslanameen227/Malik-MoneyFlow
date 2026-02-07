@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null; existingAccount?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, name: string): Promise<{ error: string | null }> {
+  async function signUp(email: string, password: string, name: string): Promise<{ error: string | null; existingAccount?: boolean }> {
     try {
       const { data, error } = await supabaseBrowser.auth.signUp({
         email,
@@ -114,6 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         return { error: error.message };
+      }
+
+      // Check if user already exists (Supabase returns empty identities for existing users)
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        return { error: 'An account with this email already exists. Please sign in instead.', existingAccount: true };
       }
 
       if (data.user) {

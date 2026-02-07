@@ -69,9 +69,12 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await signUp(registerEmail, registerPassword, registerName);
+    const { error, existingAccount } = await signUp(registerEmail, registerPassword, registerName);
     if (error) {
       setError(error);
+    } else if (existingAccount) {
+      // This shouldn't happen as error is set, but handle just in case
+      setError('An account with this email already exists. Please sign in instead.');
     } else {
       setError('Account created! Please check your email to verify.');
     }
