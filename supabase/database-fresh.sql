@@ -15,8 +15,9 @@ DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS cash_positions CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 
--- Step 2: Drop storage bucket if exists
-DROP BUCKET IF EXISTS "transaction-attachments";
+-- Step 2: Note about storage bucket
+-- Storage buckets need to be managed through Supabase Dashboard or API
+-- The bucket will be recreated if it doesn't exist in Step 4
 
 -- Step 3: Create all tables with proper structure
 
