@@ -119,11 +119,13 @@ export default function DashboardPage() {
 
   // Calculate today's summary
   const cashReceived = todayTransactions
-    .filter(t => t.type === 'cash_in' || t.type === 'cash_in_physical')
+    .filter(t => t.type === 'cash_in' || t.type === 'cash_in_physical' || 
+      (t.type === 'cash_in_personal' && t.subcategory === 'physical'))
     .reduce((sum, t) => sum + t.amount, 0);
   
   const cashGiven = todayTransactions
-    .filter(t => t.type === 'cash_out' || t.type === 'cash_out_physical')
+    .filter(t => t.type === 'cash_out' || t.type === 'cash_out_physical' || 
+      (t.type === 'cash_out_personal' && t.subcategory === 'physical'))
     .reduce((sum, t) => sum + t.amount, 0);
   
   const totalFees = todayTransactions.reduce((sum, t) => sum + t.fee_amount, 0);
@@ -185,7 +187,8 @@ export default function DashboardPage() {
               {formatCurrency(cashReceived)}
             </div>
             <p className="text-xs text-muted-foreground">
-              From {todayTransactions.filter(t => t.type === 'cash_in' || t.type === 'cash_in_physical').length} transactions
+              From {todayTransactions.filter(t => t.type === 'cash_in' || t.type === 'cash_in_physical' || 
+                (t.type === 'cash_in_personal' && t.subcategory === 'physical')).length} transactions
             </p>
           </CardContent>
         </Card>
@@ -200,7 +203,8 @@ export default function DashboardPage() {
               {formatCurrency(cashGiven)}
             </div>
             <p className="text-xs text-muted-foreground">
-              From {todayTransactions.filter(t => t.type === 'cash_out' || t.type === 'cash_out_physical').length} transactions
+              From {todayTransactions.filter(t => t.type === 'cash_out' || t.type === 'cash_out_physical' || 
+                (t.type === 'cash_out_personal' && t.subcategory === 'physical')).length} transactions
             </p>
           </CardContent>
         </Card>
