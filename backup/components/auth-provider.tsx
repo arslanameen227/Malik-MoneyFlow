@@ -147,21 +147,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        console.error('Auth signup error:', error);
         return { error: error.message };
       }
 
       if (data.user) {
+        console.log('User created in auth, creating profile...');
         // Create profile
-        await supabaseBrowser.from('profiles').insert({
+        const { error: profileError } = await supabaseBrowser.from('profiles').insert({
           id: data.user.id,
           name,
           role: 'user',
         });
+        
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          return { error: `Database error: ${profileError.message}` };
+        }
+        console.log('Profile created successfully');
       }
 
       return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
+    } catch (error: any) {
+      console.error('SignUp catch error:', error);
+      return { error: error?.message || 'An unexpected error occurred' };
     }
   }
 
