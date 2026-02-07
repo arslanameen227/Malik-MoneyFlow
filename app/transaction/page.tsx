@@ -408,21 +408,23 @@ export default function TransactionPage() {
               <Label>Transaction Type</Label>
               <Select value={transactionType} onValueChange={(v) => setTransactionType(v as TransactionType)}>
                 <SelectTrigger className="h-14">
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const type = transactionTypes.find(t => t.value === transactionType);
-                      const Icon = type?.icon || ArrowRightLeft;
-                      return <Icon className="h-5 w-5" />;
-                    })()}
-                    <div className="text-left">
-                      <div className="font-medium">
-                        {transactionTypes.find(t => t.value === transactionType)?.label}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {transactionTypes.find(t => t.value === transactionType)?.description}
+                  <SelectValue>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const type = transactionTypes.find(t => t.value === transactionType);
+                        const Icon = type?.icon || ArrowRightLeft;
+                        return <Icon className="h-5 w-5" />;
+                      })()}
+                      <div className="text-left">
+                        <div className="font-medium">
+                          {transactionTypes.find(t => t.value === transactionType)?.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {transactionTypes.find(t => t.value === transactionType)?.description}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {transactionTypes.map((type) => (
