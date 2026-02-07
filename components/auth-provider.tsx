@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
