@@ -28,38 +28,30 @@ import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const transactionTypes: { value: TransactionType; label: string; icon: React.ElementType; description: string; mainCategory?: 'cash_in' | 'cash_out'; subCategory?: 'physical' | 'digital' }[] = [
+const transactionTypes: { value: TransactionType; label: string; icon: React.ElementType; description: string }[] = [
   { 
     value: 'cash_in', 
-    label: 'Cash In - Digital Cash', 
+    label: 'Cash In (Send to Customer)', 
     icon: ArrowDownCircle,
-    description: 'Receive cash from customer → Send to their bank/wallet',
-    mainCategory: 'cash_in',
-    subCategory: 'digital'
-  },
-  { 
-    value: 'cash_in_physical', 
-    label: 'Cash In - Physical Cash', 
-    icon: Banknote,
-    description: 'Add physical cash to cash box (no bank involved)',
-    mainCategory: 'cash_in',
-    subCategory: 'physical'
+    description: 'Receive cash from customer → Send to their bank/wallet'
   },
   { 
     value: 'cash_out', 
-    label: 'Cash Out - Digital Cash', 
+    label: 'Cash Out (Receive from Customer)', 
     icon: ArrowUpCircle,
-    description: 'Receive in bank/wallet → Give cash to customer',
-    mainCategory: 'cash_out',
-    subCategory: 'digital'
+    description: 'Receive in bank/wallet → Give cash to customer'
+  },
+  { 
+    value: 'cash_in_physical', 
+    label: 'Cash In (Physical Money)', 
+    icon: Banknote,
+    description: 'Add physical cash to cash box (no bank involved)'
   },
   { 
     value: 'cash_out_physical', 
-    label: 'Cash Out - Physical Cash', 
+    label: 'Cash Out (Physical Money)', 
     icon: Wallet,
-    description: 'Remove physical cash from cash box (no bank involved)',
-    mainCategory: 'cash_out',
-    subCategory: 'physical'
+    description: 'Remove physical cash from cash box (no bank involved)'
   },
   { 
     value: 'account_transfer', 
@@ -465,87 +457,17 @@ export default function TransactionPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash_in" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <ArrowDownCircle className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Cash In - Digital Cash</div>
-                        <div className="text-xs text-muted-foreground">Receive cash from customer → Send to their bank/wallet</div>
+                  {transactionTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value} className="h-14">
+                      <div className="flex items-center gap-3 py-2">
+                        <type.icon className="h-5 w-5" />
+                        <div>
+                          <div className="font-medium">{type.label}</div>
+                          <div className="text-xs text-muted-foreground">{type.description}</div>
+                        </div>
                       </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cash_in_physical" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <Banknote className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Cash In - Physical Cash</div>
-                        <div className="text-xs text-muted-foreground">Add physical cash to cash box (no bank involved)</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cash_out" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <ArrowUpCircle className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Cash Out - Digital Cash</div>
-                        <div className="text-xs text-muted-foreground">Receive in bank/wallet → Give cash to customer</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cash_out_physical" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <Wallet className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Cash Out - Physical Cash</div>
-                        <div className="text-xs text-muted-foreground">Remove physical cash from cash box (no bank involved)</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="account_transfer" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <ArrowRightLeft className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Transfer Between Accounts</div>
-                        <div className="text-xs text-muted-foreground">Move money between your own accounts</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="loan_given" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <HandCoins className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Loan Given</div>
-                        <div className="text-xs text-muted-foreground">Give loan to customer</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="loan_received" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <Receipt className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Loan Received</div>
-                        <div className="text-xs text-muted-foreground">Receive loan repayment from customer</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="expense" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <Wallet className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Expense</div>
-                        <div className="text-xs text-muted-foreground">Business expense payment</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="income" className="h-14">
-                    <div className="flex items-center gap-3 py-2">
-                      <Banknote className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Income</div>
-                        <div className="text-xs text-muted-foreground">Other business income</div>
-                      </div>
-                    </div>
-                  </SelectItem>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
