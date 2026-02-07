@@ -120,6 +120,11 @@ export default function LoginPage() {
                       href="/forgot-password" 
                       className="text-sm text-primary hover:underline cursor-pointer"
                       style={{ display: 'inline-block' }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = '/forgot-password';
+                      }}
                     >
                       Forgot Password?
                     </a>
