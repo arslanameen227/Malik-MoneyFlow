@@ -102,8 +102,6 @@ export default function TransactionPage() {
   const [saving, setSaving] = useState(false);
 
   // Transaction form state
-  const [mainCategory, setMainCategory] = useState<'cash_in' | 'cash_out' | 'other'>('cash_in');
-  const [subCategory, setSubCategory] = useState<'physical' | 'digital'>('digital');
   const [transactionType, setTransactionType] = useState<TransactionType>('cash_in');
   const [amount, setAmount] = useState('');
   const [fee, setFee] = useState('');
@@ -132,15 +130,6 @@ export default function TransactionPage() {
   useEffect(() => {
     loadData();
   }, []);
-
-  useEffect(() => {
-    // Update transaction type based on main category and subcategory
-    if (mainCategory === 'cash_in') {
-      setTransactionType(subCategory === 'physical' ? 'cash_in_physical' : 'cash_in');
-    } else if (mainCategory === 'cash_out') {
-      setTransactionType(subCategory === 'physical' ? 'cash_out_physical' : 'cash_out');
-    }
-  }, [mainCategory, subCategory]);
 
   useEffect(() => {
     // Auto-calculate fee when customer is selected and amount entered
@@ -452,35 +441,114 @@ export default function TransactionPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Transaction Type - Main Category */}
+            {/* Transaction Type */}
             <div className="space-y-2">
               <Label>Transaction Type</Label>
-              <Select value={mainCategory} onValueChange={(v) => setMainCategory(v as 'cash_in' | 'cash_out' | 'other')}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
+              <Select value={transactionType} onValueChange={(v) => setTransactionType(v as TransactionType)}>
+                <SelectTrigger className="h-14">
+                  <SelectValue>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const type = transactionTypes.find(t => t.value === transactionType);
+                        const Icon = type?.icon || ArrowRightLeft;
+                        return <Icon className="h-5 w-5" />;
+                      })()}
+                      <div className="text-left">
+                        <div className="font-medium">
+                          {transactionTypes.find(t => t.value === transactionType)?.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {transactionTypes.find(t => t.value === transactionType)?.description}
+                        </div>
+                      </div>
+                    </div>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash_in">Cash In</SelectItem>
-                  <SelectItem value="cash_out">Cash Out</SelectItem>
+                  <SelectItem value="cash_in" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <ArrowDownCircle className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Cash In - Digital Cash</div>
+                        <div className="text-xs text-muted-foreground">Receive cash from customer → Send to their bank/wallet</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cash_in_physical" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <Banknote className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Cash In - Physical Cash</div>
+                        <div className="text-xs text-muted-foreground">Add physical cash to cash box (no bank involved)</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cash_out" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <ArrowUpCircle className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Cash Out - Digital Cash</div>
+                        <div className="text-xs text-muted-foreground">Receive in bank/wallet → Give cash to customer</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cash_out_physical" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <Wallet className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Cash Out - Physical Cash</div>
+                        <div className="text-xs text-muted-foreground">Remove physical cash from cash box (no bank involved)</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="account_transfer" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <ArrowRightLeft className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Transfer Between Accounts</div>
+                        <div className="text-xs text-muted-foreground">Move money between your own accounts</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="loan_given" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <HandCoins className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Loan Given</div>
+                        <div className="text-xs text-muted-foreground">Give loan to customer</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="loan_received" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <Receipt className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Loan Received</div>
+                        <div className="text-xs text-muted-foreground">Receive loan repayment from customer</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="expense" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <Wallet className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Expense</div>
+                        <div className="text-xs text-muted-foreground">Business expense payment</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="income" className="h-14">
+                    <div className="flex items-center gap-3 py-2">
+                      <Banknote className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">Income</div>
+                        <div className="text-xs text-muted-foreground">Other business income</div>
+                      </div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Subcategory - Physical or Digital */}
-            {(mainCategory === 'cash_in' || mainCategory === 'cash_out') && (
-              <div className="space-y-2">
-                <Label>Sub Category</Label>
-                <Select value={subCategory} onValueChange={(v) => setSubCategory(v as 'physical' | 'digital')}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="digital">Digital Cash</SelectItem>
-                    <SelectItem value="physical">Physical Cash</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Amount */}
             <div className="space-y-2">
