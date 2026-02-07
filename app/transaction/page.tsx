@@ -350,6 +350,8 @@ export default function TransactionPage() {
         
         if (data) {
           await saveLocalTransaction(data);
+          // Refresh accounts to show updated balances
+          await syncData();
         }
       } else {
         // Save as pending transaction
