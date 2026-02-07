@@ -426,7 +426,7 @@ export default function TransactionPage() {
 
   // Determine which fields to show based on transaction type
   const isPersonalTransaction = ['cash_in_personal', 'cash_out_personal'].includes(transactionType);
-  const showCustomer = ['cash_in', 'cash_out', 'loan_given', 'loan_received'].includes(transactionType);
+  const showCustomer = ['cash_in', 'cash_out', 'loan_given', 'loan_received', 'cash_out_personal'].includes(transactionType);
   const showFromAccount = ['cash_in', 'account_transfer', 'loan_given', 'expense', 'cash_out_personal'].includes(transactionType) || 
     (transactionType === 'cash_in_personal' && subcategory === 'digital');
   const showToAccount = ['cash_out', 'account_transfer', 'loan_received', 'income', 'cash_in_personal'].includes(transactionType) || 
