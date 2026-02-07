@@ -173,7 +173,9 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password</Label>
+                  </div>
                   <Input
                     id="login-password"
                     type="password"
@@ -181,15 +183,6 @@ export default function LoginPage() {
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
                   />
-                  <div className="text-right">
-                    <button 
-                      type="button"
-                      onClick={() => window.location.href = '/forgot-password'}
-                      className="text-sm text-primary hover:underline inline-block bg-transparent border-0 p-0 cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
                 </div>
                 {message?.type === 'error' && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -207,6 +200,14 @@ export default function LoginPage() {
                   )}
                 </Button>
               </form>
+              <div className="text-center mt-4">
+                <a 
+                  href="/forgot-password"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot Password?
+                </a>
+              </div>
             </TabsContent>
 
             <TabsContent value="register">
