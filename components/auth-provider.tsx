@@ -10,6 +10,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,8 +136,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  async function resetPassword(email: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      return { error: error?.message || null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  }
+
+  async function updatePassword(password: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabaseBrowser.auth.updateUser({
+        password,
+      });
+      return { error: error?.message || null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

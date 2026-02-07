@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
@@ -87,6 +88,11 @@ export default function LoginPage() {
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
                   />
+                  <div className="text-right">
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                      Forgot Password?
+                    </Link>
+                  </div>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
