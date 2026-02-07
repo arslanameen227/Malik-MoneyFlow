@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS customer_accounts (
     account_number TEXT NOT NULL,
     bank_name TEXT NOT NULL,
     type TEXT NOT NULL CHECK (type IN ('bank', 'wallet')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE
 );
 
