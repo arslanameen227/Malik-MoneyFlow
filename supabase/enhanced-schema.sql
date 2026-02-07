@@ -120,14 +120,7 @@ CREATE TRIGGER update_description_sequence_trigger
     FOR EACH ROW
     EXECUTE FUNCTION update_description_sequence();
 
--- Constraint to limit attachments per transaction (max 3)
-ALTER TABLE transaction_attachments 
-ADD CONSTRAINT chk_max_attachments 
-CHECK (
-    (SELECT COUNT(*) FROM transaction_attachments WHERE transaction_id = transaction_attachments.transaction_id) <= 3
-);
-
--- Function to validate file types
+-- Function to validate file type and size
 CREATE OR REPLACE FUNCTION validate_file_type()
 RETURNS TRIGGER AS $$
 BEGIN
