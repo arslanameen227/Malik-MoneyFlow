@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
 
 export default function ResetPasswordPage() {
   const { updatePassword } = useAuth();
@@ -83,7 +82,12 @@ export default function ResetPasswordPage() {
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">
-              <Link href="/login">Go to Login</Link>
+              <span 
+                onClick={() => window.location.href = '/login'}
+                className="cursor-pointer"
+              >
+                Go to Login
+              </span>
             </Button>
           </CardContent>
         </Card>
@@ -143,9 +147,12 @@ export default function ResetPasswordPage() {
               )}
             </Button>
             <div className="text-center">
-              <Link href="/login" className="text-sm text-muted-foreground hover:underline">
+              <span 
+                onClick={() => window.location.href = '/login'}
+                className="text-sm text-muted-foreground hover:underline cursor-pointer"
+              >
                 Back to Login
-              </Link>
+              </span>
             </div>
           </form>
         </CardContent>

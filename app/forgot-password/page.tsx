@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
@@ -47,7 +46,12 @@ export default function ForgotPasswordPage() {
               Click the link in the email to reset your password. If you don&apos;t see the email, check your spam folder.
             </p>
             <Button asChild className="w-full">
-              <Link href="/login">Back to Login</Link>
+              <span 
+                onClick={() => window.location.href = '/login'}
+                className="cursor-pointer"
+              >
+                Back to Login
+              </span>
             </Button>
           </CardContent>
         </Card>
@@ -77,7 +81,12 @@ export default function ForgotPasswordPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -89,9 +98,12 @@ export default function ForgotPasswordPage() {
               )}
             </Button>
             <div className="text-center">
-              <Link href="/login" className="text-sm text-muted-foreground hover:underline">
+              <span 
+                onClick={() => window.location.href = '/login'}
+                className="text-sm text-muted-foreground hover:underline cursor-pointer"
+              >
                 Back to Login
-              </Link>
+              </span>
             </div>
           </form>
         </CardContent>

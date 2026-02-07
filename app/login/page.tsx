@@ -79,6 +79,63 @@ export default function LoginPage() {
     setIsLoading(false);
   }
 
+  // Show verified success state
+  if (verified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <CardTitle className="text-xl font-bold">Email Verified!</CardTitle>
+            <CardDescription>
+              Your email has been verified. You can now sign in.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Password</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+              </div>
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
@@ -116,21 +173,19 @@ export default function LoginPage() {
                     required
                   />
                   <div className="text-right">
-                    <a 
-                      href="/forgot-password" 
-                      className="text-sm text-primary hover:underline cursor-pointer"
-                      style={{ display: 'inline-block' }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.location.href = '/forgot-password';
-                      }}
+                    <span 
+                      onClick={() => window.location.href = '/forgot-password'}
+                      className="text-sm text-primary hover:underline cursor-pointer inline-block"
                     >
                       Forgot Password?
-                    </a>
+                    </span>
                   </div>
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <>
@@ -180,9 +235,11 @@ export default function LoginPage() {
                   />
                 </div>
                 {error && (
-                  <p className={`text-sm ${error.includes('created') ? 'text-green-500' : 'text-red-500'}`}>
-                    {error}
-                  </p>
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className={`text-sm ${error.includes('created') ? 'text-green-600' : 'text-red-600'}`}>
+                      {error}
+                    </p>
+                  </div>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
