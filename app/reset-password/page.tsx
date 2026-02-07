@@ -29,11 +29,20 @@ function ResetPasswordForm() {
   const [tokenValid, setTokenValid] = useState(false);
 
   useEffect(() => {
-    const accessToken = searchParams.get('code');
+    const accessToken = searchParams.get('token') || searchParams.get('code');
     const refreshToken = searchParams.get('refresh_token') || '';
+    const type = searchParams.get('type');
+
+    console.log('Reset password params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
 
     if (!accessToken) {
       setMessage({ type: 'error', text: 'No reset token found. Please request a new password reset link.' });
+      setIsLoading(false);
+      return;
+    }
+
+    if (type !== 'recovery') {
+      setMessage({ type: 'error', text: 'Invalid link type. This link is not for password reset.' });
       setIsLoading(false);
       return;
     }
@@ -45,14 +54,23 @@ function ResetPasswordForm() {
       })
       .then(({ error }: { error: Error | null }) => {
         if (error) {
+          console.error('Session error:', error);
           setMessage({ 
             type: 'error', 
-            text: 'Invalid or expired reset link. Please request a new password reset link.' 
+            text: `Invalid or expired reset link: ${error.message}. Please request a new password reset link.` 
           });
         } else {
           setTokenValid(true);
           setMessage(null);
         }
+        setIsLoading(false);
+      })
+      .catch((err: any) => {
+        console.error('Unexpected error:', err);
+        setMessage({ 
+          type: 'error', 
+          text: 'An unexpected error occurred. Please try again or contact support.' 
+        });
         setIsLoading(false);
       });
   }, [searchParams]);

@@ -154,12 +154,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function updatePassword(password: string): Promise<{ error: string | null }> {
     try {
+      console.log('Updating password...');
       const { error } = await supabaseBrowser.auth.updateUser({
         password,
       });
-      return { error: error?.message || null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
+      
+      if (error) {
+        console.error('Password update error:', error);
+        return { error: error.message };
+      }
+      
+      console.log('Password updated successfully');
+      return { error: null };
+    } catch (error: any) {
+      console.error('Unexpected password update error:', error);
+      return { error: 'An unexpected error occurred while updating password' };
     }
   }
 
