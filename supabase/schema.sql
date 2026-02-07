@@ -147,13 +147,25 @@ CREATE POLICY "Users can only access their own profile"
 CREATE OR REPLACE FUNCTION update_account_balance()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- For cash_in: Decrease cash, record outgoing
+  -- For cash_in: Receive cash, send from bank
+  -- Cash increases, bank decreases
   IF NEW.type = 'cash_in' THEN
-    UPDATE accounts SET current_balance = current_balance - NEW.amount WHERE id = NEW.from_account_id;
+    -- Increase cash account (customer gave us cash)
+    UPDATE accounts SET current_balance = current_balance + NEW.amount 
+    WHERE user_id = NEW.user_id AND type = 'cash';
+    -- Decrease bank account (we sent to customer)
+    UPDATE accounts SET current_balance = current_balance - NEW.amount 
+    WHERE id = NEW.from_account_id;
   
-  -- For cash_out: Increase cash, record incoming
+  -- For cash_out: Give cash, receive in bank
+  -- Cash decreases, bank increases
   ELSIF NEW.type = 'cash_out' THEN
-    UPDATE accounts SET current_balance = current_balance + NEW.amount WHERE id = NEW.to_account_id;
+    -- Decrease cash account (we gave cash to customer)
+    UPDATE accounts SET current_balance = current_balance - NEW.amount 
+    WHERE user_id = NEW.user_id AND type = 'cash';
+    -- Increase bank account (customer sent to us)
+    UPDATE accounts SET current_balance = current_balance + NEW.amount 
+    WHERE id = NEW.to_account_id;
   
   -- For account_transfer: Decrease from, increase to
   ELSIF NEW.type = 'account_transfer' THEN
