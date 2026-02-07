@@ -41,54 +41,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Failsafe: ensure loading is never stuck for more than 10 seconds
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('⏱️ Loading timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   async function fetchUserProfile(userId: string) {
+    console.log('🔍 Fetching profile for user:', userId);
     try {
-      const { data, error } = await supabaseBrowser
+      // Try to get existing profile
+      const { data: existingProfile, error: fetchError } = await supabaseBrowser
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Profile fetch error:', error);
-        // Profile might not exist yet, create it
-        const { data: authUser } = await supabaseBrowser.auth.getUser();
-        if (authUser.user) {
-          const { error: insertError } = await supabaseBrowser
-            .from('profiles')
-            .insert({
-              id: userId,
-              name: authUser.user.email?.split('@')[0] || 'User',
-              role: 'user',
-            });
-          
-          if (!insertError) {
-            setUser({
-              id: userId,
-              email: authUser.user.email || '',
-              name: authUser.user.email?.split('@')[0] || 'User',
-              role: 'user',
-              created_at: new Date().toISOString(),
-            });
-          }
-        }
+      if (fetchError) {
+        console.error('❌ Profile fetch error:', fetchError);
+        // Try to create profile if it doesn't exist
+        await createUserProfile(userId);
+      } else if (!existingProfile) {
+        console.log('⚠️ No profile found, creating new one...');
+        await createUserProfile(userId);
       } else {
+        console.log('✅ Profile found:', existingProfile);
         const { data: authUser } = await supabaseBrowser.auth.getUser();
         setUser({
           id: userId,
           email: authUser.user?.email || '',
-          name: data.name,
-          role: data.role,
-          created_at: data.created_at,
+          name: existingProfile.name,
+          role: existingProfile.role,
+          created_at: existingProfile.created_at,
         });
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('❌ Error in fetchUserProfile:', error);
     } finally {
+      console.log('✅ Setting loading to false');
       setLoading(false);
+    }
+  }
+
+  async function createUserProfile(userId: string) {
+    try {
+      const { data: authUser } = await supabaseBrowser.auth.getUser();
+      const userName = authUser.user?.email?.split('@')[0] || 'User';
+      const userEmail = authUser.user?.email || '';
+      
+      console.log('📝 Creating new profile for:', userEmail);
+      
+      const { error: insertError } = await supabaseBrowser
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: userName,
+          role: 'user',
+        });
+      
+      if (insertError) {
+        console.error('❌ Failed to create profile:', insertError);
+      } else {
+        console.log('✅ Profile created successfully');
+        setUser({
+          id: userId,
+          email: userEmail,
+          name: userName,
+          role: 'user',
+          created_at: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error creating user profile:', error);
     }
   }
 
