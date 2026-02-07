@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { supabaseBrowser } from '@/lib/supabase';
-import { Transaction, Account } from '@/lib/types';
+import { Transaction, Account, TransactionDescription, TransactionAttachment } from '@/lib/types';
 import { getLocalTransactions, getLocalAccounts, isOnline } from '@/lib/offline-storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, RefreshCw, Download, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { EnhancedReportsTable } from '@/components/enhanced-reports-table';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -50,9 +50,17 @@ export default function ReportsPage() {
     if (!user) return;
     setIsSyncing(true);
     try {
+      // Get transactions with descriptions and attachments
       const { data: txData } = await supabaseBrowser
         .from('transactions')
-        .select('*, from_account:accounts!from_account_id(*), to_account:accounts!to_account_id(*), customer:customers(*)')
+        .select(`
+          *,
+          from_account:accounts!from_account_id(*),
+          to_account:accounts!to_account_id(*),
+          customer:customers(*),
+          descriptions:transaction_descriptions(*),
+          attachments:transaction_attachments(*)
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (txData) setTransactions(txData);
@@ -66,6 +74,69 @@ export default function ReportsPage() {
       setIsSyncing(false);
     }
   }
+
+  // Enhanced handlers for descriptions and attachments
+  const handleAddDescription = async (transactionId: string, description: string) => {
+    if (!user) return;
+    
+    try {
+      const { data: newDesc } = await supabaseBrowser
+        .from('transaction_descriptions')
+        .insert({
+          transaction_id: transactionId,
+          description,
+          sequence_order: 1, // Will be updated based on existing descriptions
+        })
+        .select()
+        .single();
+
+      if (newDesc) {
+        // Refresh transaction data
+        await syncData();
+      }
+    } catch (error) {
+      console.error('Error adding description:', error);
+    }
+  };
+
+  const handleAddAttachment = async (transactionId: string, file: File) => {
+    if (!user) return;
+
+    try {
+      // Upload file to storage
+      const fileName = `${transactionId}/${Date.now()}-${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabaseBrowser.storage
+        .from('transaction-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabaseBrowser.storage
+        .from('transaction-attachments')
+        .getPublicUrl(fileName);
+
+      // Save attachment record
+      const { data: attachment } = await supabaseBrowser
+        .from('transaction_attachments')
+        .insert({
+          transaction_id: transactionId,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+          file_url: publicUrl,
+        })
+        .select()
+        .single();
+
+      if (attachment) {
+        // Refresh transaction data
+        await syncData();
+      }
+    } catch (error) {
+      console.error('Error adding attachment:', error);
+    }
+  };
 
   const filteredTransactions = transactions.filter(t => {
     const txDate = t.transaction_date;
@@ -160,40 +231,11 @@ export default function ReportsPage() {
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total Fees</p><p className="text-2xl font-bold text-blue-600">{formatCurrency(summary.fees)}</p></CardContent></Card>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Transactions</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Fee</TableHead>
-                <TableHead>From/To</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTransactions.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                  <TableCell><Badge variant="outline" className="capitalize">{t.type.replace('_', ' ')}</Badge></TableCell>
-                  <TableCell>{t.customer?.name || '-'}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(t.amount)}</TableCell>
-                  <TableCell className="text-green-600">{t.fee_amount > 0 ? formatCurrency(t.fee_amount) : '-'}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {t.from_account?.name || t.to_account?.name || '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredTransactions.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions found for this period</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <EnhancedReportsTable 
+        transactions={filteredTransactions}
+        onAddDescription={handleAddDescription}
+        onAddAttachment={handleAddAttachment}
+      />
     </div>
   );
 }

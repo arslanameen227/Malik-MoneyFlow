@@ -45,6 +45,24 @@ export interface CustomerAccount {
   created_at: string;
 }
 
+export interface TransactionAttachment {
+  id: string;
+  transaction_id: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  file_url: string;
+  created_at: string;
+}
+
+export interface TransactionDescription {
+  id: string;
+  transaction_id: string;
+  description: string;
+  sequence_order: number;
+  created_at: string;
+}
+
 export interface Transaction {
   id: string;
   type: TransactionType;
@@ -59,6 +77,9 @@ export interface Transaction {
   transaction_date: string;
   created_at: string;
   user_id: string;
+  // New fields for enhanced functionality
+  descriptions?: TransactionDescription[];
+  attachments?: TransactionAttachment[];
   // Join fields
   from_account?: Account;
   to_account?: Account;
