@@ -308,6 +308,8 @@ export default function TransactionPage() {
       setSelectedCustomer(customer);
       setCustomerInput(customer.name);
       
+      toast.success(`Customer "${customer.name}" added successfully!`);
+      
       // Reset new customer form
       setNewCustomerName('');
       setNewCustomerPhone('');
@@ -317,8 +319,9 @@ export default function TransactionPage() {
       setNewAccountNumber('');
       setNewBankName('');
       setIsNewCustomerOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating customer:', error);
+      toast.error(error.message || 'Failed to add customer. Please try again.');
     }
   }
 
