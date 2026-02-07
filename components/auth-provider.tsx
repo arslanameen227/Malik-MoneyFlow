@@ -106,9 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: typeof window !== 'undefined' 
-            ? `${window.location.origin}/login`
-            : 'https://malik-moneyflow.vercel.app/login',
+          emailRedirectTo: 'https://malik-moneyflow.vercel.app/login',
         },
       });
 
