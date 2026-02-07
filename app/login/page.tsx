@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { loginSchema, registerSchema } from '@/lib/validation';
 
 // Message type for better UX
 interface Message {
@@ -63,9 +64,18 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage(null);
 
-    const { error } = await signIn(loginEmail, loginPassword);
-    if (error) {
-      setMessage({ type: 'error', text: error });
+    try {
+      const result = loginSchema.parse({
+        email: loginEmail,
+        password: loginPassword
+      });
+      
+      const { error } = await signIn(result.email, result.password);
+      if (error) {
+        setMessage({ type: 'error', text: error });
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.errors?.[0]?.message || 'Invalid input' });
     }
 
     setIsLoading(false);
@@ -76,13 +86,24 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage(null);
 
-    const { error, existingAccount } = await signUp(registerEmail, registerPassword, registerName);
-    if (error) {
-      setMessage({ type: 'error', text: error });
-    } else if (existingAccount) {
-      setMessage({ type: 'error', text: 'An account with this email already exists. Please sign in instead.' });
-    } else {
-      setMessage({ type: 'success', text: 'Account created! Please check your email to verify.' });
+    try {
+      const result = registerSchema.parse({
+        name: registerName,
+        email: registerEmail,
+        password: registerPassword,
+        confirmPassword: registerPassword
+      });
+      
+      const { error, existingAccount } = await signUp(result.email, result.password, result.name);
+      if (error) {
+        setMessage({ type: 'error', text: error });
+      } else if (existingAccount) {
+        setMessage({ type: 'error', text: 'An account with this email already exists. Please sign in instead.' });
+      } else {
+        setMessage({ type: 'success', text: 'Account created! Please check your email to verify.' });
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.errors?.[0]?.message || 'Invalid input' });
     }
 
     setIsLoading(false);

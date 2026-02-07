@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { passwordSchema } from '@/lib/validation';
 
 interface Message {
   type: 'success' | 'error' | 'info';
@@ -59,27 +60,29 @@ function ResetPasswordForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      setMessage({ type: 'error', text: 'Passwords do not match' });
-      return;
+    try {
+      // Validate passwords
+      passwordSchema.parse(password);
+      
+      if (password !== confirmPassword) {
+        setMessage({ type: 'error', text: 'Passwords do not match' });
+        return;
+      }
+
+      setIsLoading(true);
+      setMessage(null);
+
+      const { error } = await updatePassword(password);
+      if (error) {
+        setMessage({ type: 'error', text: error });
+      } else {
+        setSuccess(true);
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.errors?.[0]?.message || 'Invalid password' });
+    } finally {
+      setIsLoading(false);
     }
-
-    if (password.length < 6) {
-      setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage(null);
-
-    const { error } = await updatePassword(password);
-    if (error) {
-      setMessage({ type: 'error', text: error });
-    } else {
-      setSuccess(true);
-    }
-
-    setIsLoading(false);
   }
 
   if (success) {
