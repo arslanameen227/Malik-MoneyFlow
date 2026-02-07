@@ -19,7 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Phone, Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Phone, Loader2, RefreshCw, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
 export default function CustomersPage() {
   const { user } = useAuth();
@@ -29,6 +29,7 @@ export default function CustomersPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [name, setName] = useState('');
@@ -138,6 +139,13 @@ export default function CustomersPage() {
     setExpandedCustomer(expandedCustomer === customerId ? null : customerId);
   }
 
+  // Remove duplicates by customer ID and filter by search
+  const uniqueCustomers = Array.from(new Map(customers.map(c => [c.id, c])).values());
+  const filteredCustomers = uniqueCustomers.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.phone && c.phone.includes(searchQuery))
+  );
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -146,7 +154,16 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Customers</h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 w-64"
+            />
+          </div>
           <Button variant="outline" size="sm" onClick={syncCustomers} disabled={isSyncing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} /> Sync
           </Button>
@@ -188,7 +205,7 @@ export default function CustomersPage() {
       </div>
 
       <div className="space-y-3">
-        {customers.map((customer) => (
+        {filteredCustomers.map((customer) => (
           <Card key={customer.id} className="overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -229,8 +246,10 @@ export default function CustomersPage() {
           </Card>
         ))}
 
-        {customers.length === 0 && (
-          <Card><CardContent className="py-8 text-center text-muted-foreground">No customers yet. Click "Add Customer" to create one.</CardContent></Card>
+        {filteredCustomers.length === 0 && (
+          <Card><CardContent className="py-8 text-center text-muted-foreground">
+            {searchQuery ? 'No customers found matching your search.' : 'No customers yet. Click "Add Customer" to create one.'}
+          </CardContent></Card>
         )}
       </div>
     </div>
