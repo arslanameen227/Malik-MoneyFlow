@@ -28,12 +28,19 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
+// Public routes that don't require authentication
+const publicRoutes = ['/login/', '/forgot-password/', '/reset-password/'];
+
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { user, loading, signOut } = useAuth();
+  const pathname = usePathname();
+
+  // Check if current route is public
+  const isPublicRoute = publicRoutes.some(route => pathname?.startsWith(route));
 
   if (loading) {
     return (
@@ -43,6 +50,12 @@ export default function AppLayout({
     );
   }
 
+  // Allow public routes to render their own content
+  if (!user && isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  // Redirect to login if not authenticated and not on public route
   if (!user) {
     return <LoginPage />;
   }
