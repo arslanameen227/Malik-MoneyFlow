@@ -44,13 +44,13 @@ export interface CustomerAccount {
 export interface Transaction {
   id: string;
   type: TransactionType;
-  from_account_id?: string;
-  to_account_id?: string;
-  customer_id?: string;
-  customer_account_id?: string;
+  from_account_id?: string | null;
+  to_account_id?: string | null;
+  customer_id?: string | null;
+  customer_account_id?: string | null;
   amount: number;
   fee_amount: number;
-  description?: string;
+  description?: string | null;
   transaction_date: string;
   created_at: string;
   user_id: string;
