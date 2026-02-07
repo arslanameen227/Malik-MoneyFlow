@@ -262,13 +262,21 @@ export default function TransactionPage() {
         const { data, error } = await supabaseBrowser
           .from('customers')
           .insert(customerData)
-          .select()
-          .single();
+          .select();
 
-        if (error) throw error;
-        customer = data;
-        customerId = data.id;
-        await saveLocalCustomer(data);
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          throw new Error('No data returned from customer creation');
+        }
+        
+        customer = data[0];
+        customerId = customer.id;
+        console.log('Customer created:', customer);
+        await saveLocalCustomer(customer);
       } else {
         customerId = `temp-${Date.now()}`;
         customer = { ...customerData, id: customerId, created_at: new Date().toISOString() };
