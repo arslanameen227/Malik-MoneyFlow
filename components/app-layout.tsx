@@ -29,7 +29,7 @@ const navigation = [
 ];
 
 // Public routes that don't require authentication
-const publicRoutes = ['/login/', '/forgot-password/', '/reset-password/'];
+const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 export default function AppLayout({
   children,
