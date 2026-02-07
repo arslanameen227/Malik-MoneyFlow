@@ -11,9 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, RefreshCw, Download } from 'lucide-react';
+import { Loader2, RefreshCw, Download, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -99,6 +100,26 @@ export default function ReportsPage() {
     a.click();
   }
 
+  function exportToExcel() {
+    const data = filteredTransactions.map(t => ({
+      Date: t.transaction_date,
+      Type: t.type.replace(/_/g, ' '),
+      Subcategory: t.subcategory || '',
+      Customer: t.customer?.name || '',
+      'Customer Account': t.customer_account?.account_title || '',
+      Amount: t.amount,
+      Fee: t.fee_amount,
+      'From Account': t.from_account?.name || '',
+      'To Account': t.to_account?.name || '',
+      Description: t.description || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+    XLSX.writeFile(wb, `transactions-${startDate}-to-${endDate}.xlsx`);
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -127,6 +148,7 @@ export default function ReportsPage() {
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
             <Button onClick={exportToCSV} variant="outline"><Download className="h-4 w-4 mr-2" /> Export CSV</Button>
+            <Button onClick={exportToExcel} variant="outline" className="bg-green-50"><FileSpreadsheet className="h-4 w-4 mr-2" /> Export Excel</Button>
           </div>
         </CardContent>
       </Card>
