@@ -116,8 +116,8 @@ export default function LoginPage() {
                     required
                   />
                   <div className="text-right">
-                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                      Forgot Password?
+                    <Link href="/forgot-password" passHref legacyBehavior>
+                      <a className="text-sm text-primary hover:underline">Forgot Password?</a>
                     </Link>
                   </div>
                 </div>
