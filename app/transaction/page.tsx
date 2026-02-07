@@ -118,8 +118,9 @@ export default function TransactionPage() {
   const [newAccountNumber, setNewAccountNumber] = useState('');
   const [newBankName, setNewBankName] = useState('');
 
-  // Success message
+  // Success and error messages
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -336,6 +337,29 @@ export default function TransactionPage() {
     e.preventDefault();
     if (!user) return;
 
+    // Validation
+    setErrorMessage(null);
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      setErrorMessage('Please enter a valid amount');
+      return;
+    }
+    
+    if (showCustomer && !selectedCustomer) {
+      setErrorMessage('Please select a customer');
+      return;
+    }
+    
+    if (showFromAccount && !fromAccountId) {
+      setErrorMessage('Please select a from account');
+      return;
+    }
+    
+    if (showToAccount && !toAccountId) {
+      setErrorMessage('Please select a to account');
+      return;
+    }
+
     setSaving(true);
     try {
       const transactionData = {
@@ -351,6 +375,8 @@ export default function TransactionPage() {
         transaction_date: new Date().toISOString().split('T')[0],
       };
 
+      console.log('Submitting transaction:', transactionData);
+
       if (isOnline()) {
         const { data, error } = await supabaseBrowser
           .from('transactions')
@@ -358,15 +384,16 @@ export default function TransactionPage() {
           .select('*, from_account:accounts!from_account_id(*), to_account:accounts!to_account_id(*), customer:customers(*), customer_account:customer_accounts(*)')
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw new Error(error.message);
+        }
         
         if (data) {
           await saveLocalTransaction(data);
-          // Refresh accounts to show updated balances
           await syncData();
         }
       } else {
-        // Save as pending transaction
         const pendingTx = {
           ...transactionData,
           id: `temp-${Date.now()}`,
@@ -380,8 +407,9 @@ export default function TransactionPage() {
       resetForm();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving transaction:', error);
+      setErrorMessage(error.message || 'Failed to save transaction. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -408,6 +436,12 @@ export default function TransactionPage() {
       {showSuccess && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
           Transaction saved successfully!
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {errorMessage}
         </div>
       )}
 
