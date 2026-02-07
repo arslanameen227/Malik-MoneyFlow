@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Check, ChevronsUpDown, Plus, Loader2, ArrowRightLeft, Wallet, Banknote, HandCoins, Receipt, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const transactionTypes: { value: TransactionType; label: string; icon: React.ElementType; description: string }[] = [
   { 
@@ -117,10 +118,6 @@ export default function TransactionPage() {
   const [newAccountTitle, setNewAccountTitle] = useState('');
   const [newAccountNumber, setNewAccountNumber] = useState('');
   const [newBankName, setNewBankName] = useState('');
-
-  // Success and error messages
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -338,25 +335,23 @@ export default function TransactionPage() {
     if (!user) return;
 
     // Validation
-    setErrorMessage(null);
-    
     if (!amount || parseFloat(amount) <= 0) {
-      setErrorMessage('Please enter a valid amount');
+      toast.error('Please enter a valid amount');
       return;
     }
     
     if (showCustomer && !selectedCustomer) {
-      setErrorMessage('Please select a customer');
+      toast.error('Please select a customer');
       return;
     }
     
     if (showFromAccount && !fromAccountId) {
-      setErrorMessage('Please select a from account');
+      toast.error('Please select a from account');
       return;
     }
     
     if (showToAccount && !toAccountId) {
-      setErrorMessage('Please select a to account');
+      toast.error('Please select a to account');
       return;
     }
 
@@ -405,11 +400,10 @@ export default function TransactionPage() {
       }
 
       resetForm();
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      toast.success('Transaction saved successfully!');
     } catch (error: any) {
       console.error('Error saving transaction:', error);
-      setErrorMessage(error.message || 'Failed to save transaction. Please try again.');
+      toast.error(error.message || 'Failed to save transaction. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -432,18 +426,6 @@ export default function TransactionPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">New Transaction</h1>
-
-      {showSuccess && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          Transaction saved successfully!
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {errorMessage}
-        </div>
-      )}
 
       <Card>
         <CardHeader>

@@ -6,6 +6,8 @@ CREATE TYPE account_type AS ENUM ('cash', 'bank', 'wallet');
 CREATE TYPE transaction_type AS ENUM (
   'cash_in',
   'cash_out',
+  'cash_in_physical',
+  'cash_out_physical',
   'account_transfer',
   'loan_given',
   'loan_received',
