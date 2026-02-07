@@ -92,7 +92,7 @@ function ResetPasswordForm() {
             <CardDescription>Your password has been successfully updated</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => window.location.href = '/login/'} className="w-full">
+            <Button onClick={() => window.location.href = '/login'} className="w-full">
               Go to Login
             </Button>
           </CardContent>
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <button
-              onClick={() => window.location.href = '/forgot-password/'}
+              onClick={() => window.location.href = '/forgot-password'}
               className="absolute left-4 top-4 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
             <CardDescription>{message.text}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => window.location.href = '/forgot-password/'} className="w-full">
+            <Button onClick={() => window.location.href = '/forgot-password'} className="w-full">
               Request New Link
             </Button>
           </CardContent>
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center relative">
           <button
-            onClick={() => window.location.href = '/login/'}
+            onClick={() => window.location.href = '/login'}
             className="absolute left-4 top-4 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -214,7 +214,7 @@ function ResetPasswordForm() {
             <div className="text-center">
               <button 
                 type="button"
-                onClick={() => window.location.href = '/login/'}
+                onClick={() => window.location.href = '/login'}
                 className="text-sm text-muted-foreground hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Back to Login

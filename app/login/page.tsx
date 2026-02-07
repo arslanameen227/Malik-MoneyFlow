@@ -184,7 +184,7 @@ export default function LoginPage() {
                   <div className="text-right">
                     <button 
                       type="button"
-                      onClick={() => window.location.href = '/forgot-password/'}
+                      onClick={() => window.location.href = '/forgot-password'}
                       className="text-sm text-primary hover:underline inline-block bg-transparent border-0 p-0 cursor-pointer"
                     >
                       Forgot Password?

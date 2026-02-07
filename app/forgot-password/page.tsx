@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
               Click the link in the email to reset your password. If you don&apos;t see the email, check your spam folder.
             </p>
             <Button 
-              onClick={() => window.location.href = '/login/'} 
+              onClick={() => window.location.href = '/login'} 
               className="w-full"
             >
               Back to Login
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <button
-            onClick={() => window.location.href = '/login/'}
+            onClick={() => window.location.href = '/login'}
             className="absolute left-4 top-4 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -165,7 +165,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center">
               <button 
                 type="button"
-                onClick={() => window.location.href = '/login/'}
+                onClick={() => window.location.href = '/login'}
                 className="text-sm text-muted-foreground hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Back to Login
