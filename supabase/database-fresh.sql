@@ -27,8 +27,8 @@ CREATE TABLE profiles (
     email TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- 3.2 Customers Table
@@ -38,7 +38,7 @@ CREATE TABLE customers (
     phone TEXT,
     fee_type TEXT NOT NULL DEFAULT 'percentage' CHECK (fee_type IN ('percentage', 'fixed')),
     fee_value DECIMAL(10,2) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE accounts (
     account_number TEXT,
     provider TEXT,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -64,7 +64,7 @@ CREATE TABLE customer_accounts (
     account_number TEXT NOT NULL,
     bank_name TEXT NOT NULL,
     type TEXT NOT NULL CHECK (type IN ('bank', 'wallet')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -85,7 +85,7 @@ CREATE TABLE transactions (
     fee_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
     description TEXT,
     transaction_date DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -95,7 +95,7 @@ CREATE TABLE transaction_descriptions (
     transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
     sequence_order INTEGER NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -107,7 +107,7 @@ CREATE TABLE transaction_attachments (
     file_type TEXT NOT NULL,
     file_size BIGINT NOT NULL,
     file_url TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
 );
 
@@ -120,7 +120,7 @@ CREATE TABLE cash_positions (
     total_cash_received DECIMAL(15,2) NOT NULL DEFAULT 0,
     total_cash_given DECIMAL(15,2) NOT NULL DEFAULT 0,
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     UNIQUE(user_id, date) -- One cash position per user per day
 );
 
