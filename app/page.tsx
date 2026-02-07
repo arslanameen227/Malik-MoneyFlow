@@ -133,6 +133,16 @@ export default function DashboardPage() {
   const cashAccount = accounts.find(a => a.type === 'cash');
   const cashBalance = cashAccount?.current_balance || 0;
 
+  // Helper function to get transaction type color
+  const getTransactionTypeColor = (type: string) => {
+    const moneyInTypes = ['cash_in', 'cash_in_personal', 'cash_in_physical', 'loan_received', 'income'];
+    const moneyOutTypes = ['cash_out', 'cash_out_personal', 'cash_out_physical', 'loan_given', 'expense'];
+    
+    if (moneyInTypes.includes(type)) return 'bg-green-100 text-green-700 hover:bg-green-100';
+    if (moneyOutTypes.includes(type)) return 'bg-red-100 text-red-700 hover:bg-red-100';
+    return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -287,10 +297,9 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <Badge 
-                    variant={transaction.type === 'cash_out' ? 'default' : 'secondary'}
-                    className="capitalize"
+                    className={`capitalize ${getTransactionTypeColor(transaction.type)}`}
                   >
-                    {transaction.type.replace('_', ' ')}
+                    {transaction.type.replace(/_/g, ' ')}
                   </Badge>
                   <div>
                     <p className="font-medium">
