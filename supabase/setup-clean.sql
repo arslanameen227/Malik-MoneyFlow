@@ -114,9 +114,9 @@ ALTER TABLE transaction_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_positions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Profiles
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid()::text = id::text);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid()::text = id::text);
-CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid()::text = id::text);
+CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- RLS Policies for other tables (users can only access their own data)
 CREATE POLICY "Users can view own customers" ON customers FOR SELECT USING (auth.uid() = user_id);
