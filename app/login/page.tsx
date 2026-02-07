@@ -116,9 +116,13 @@ export default function LoginPage() {
                     required
                   />
                   <div className="text-right">
-                    <Link href="/forgot-password" passHref legacyBehavior>
-                      <a className="text-sm text-primary hover:underline">Forgot Password?</a>
-                    </Link>
+                    <a 
+                      href="/forgot-password" 
+                      className="text-sm text-primary hover:underline cursor-pointer"
+                      style={{ display: 'inline-block' }}
+                    >
+                      Forgot Password?
+                    </a>
                   </div>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
