@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { supabaseBrowser } from '@/lib/supabase';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +15,9 @@ interface Message {
   text: string;
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const { updatePassword } = useAuth();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<Message | null>({ type: 'info', text: 'Verifying reset link...' });
   const [success, setSuccess] = useState(false);
@@ -26,24 +28,8 @@ export default function ResetPasswordPage() {
   const [tokenValid, setTokenValid] = useState(false);
 
   useEffect(() => {
-    // Check both query params (?code=) and hash fragment (#access_token=)
-    const url = new URL(window.location.href);
-    
-    // Try query params first (?code=)
-    let accessToken = url.searchParams.get('code');
-    let refreshToken = url.searchParams.get('refresh_token') || '';
-    let type = url.searchParams.get('type');
-    
-    // If not in query, try hash fragment (#access_token=)
-    if (!accessToken) {
-      const hash = window.location.hash;
-      if (hash) {
-        const hashParams = new URLSearchParams(hash.substring(1));
-        accessToken = hashParams.get('access_token');
-        refreshToken = hashParams.get('refresh_token') || '';
-        type = hashParams.get('type');
-      }
-    }
+    const accessToken = searchParams.get('code');
+    const refreshToken = searchParams.get('refresh_token') || '';
 
     if (!accessToken) {
       setMessage({ type: 'error', text: 'No reset token found. Please request a new password reset link.' });
@@ -51,7 +37,6 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    // Set the session from the token
     supabaseBrowser.auth
       .setSession({
         access_token: accessToken,
@@ -69,7 +54,7 @@ export default function ResetPasswordPage() {
         }
         setIsLoading(false);
       });
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +77,6 @@ export default function ResetPasswordPage() {
       setMessage({ type: 'error', text: error });
     } else {
       setSuccess(true);
-      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     setIsLoading(false);
@@ -117,7 +101,6 @@ export default function ResetPasswordPage() {
     );
   }
 
-  // Error state when token is invalid
   if (!isLoading && !tokenValid && message?.type === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -241,5 +224,29 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
