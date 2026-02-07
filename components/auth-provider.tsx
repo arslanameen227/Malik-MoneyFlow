@@ -31,9 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
+    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange(async (_event: string, session: { user: { id: string } } | null) => {
+      console.log('Auth state changed:', _event, session?.user?.id);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
       } else {
         setUser(null);
         setLoading(false);
@@ -45,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchUserProfile(userId: string) {
     try {
+      console.log('Fetching profile for user:', userId);
+      
       const { data, error } = await supabaseBrowser
         .from('profiles')
         .select('*')
@@ -52,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
+        console.log('Profile not found, creating new profile:', error);
         // Profile might not exist yet, create it
         const { data: authUser } = await supabaseBrowser.auth.getUser();
         if (authUser.user) {
@@ -64,27 +68,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           
           if (!insertError) {
-            setUser({
+            const newUser = {
               id: userId,
               email: authUser.user.email || '',
               name: authUser.user.email?.split('@')[0] || 'User',
-              role: 'user',
+              role: 'user' as const,
               created_at: new Date().toISOString(),
-            });
+            };
+            setUser(newUser);
+            console.log('New user profile created:', newUser);
+          } else {
+            console.error('Error creating profile:', insertError);
           }
         }
       } else {
         const { data: authUser } = await supabaseBrowser.auth.getUser();
-        setUser({
+        const existingUser = {
           id: userId,
           email: authUser.user?.email || '',
           name: data.name,
           role: data.role,
           created_at: data.created_at,
-        });
+        };
+        setUser(existingUser);
+        console.log('Existing user profile loaded:', existingUser);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      // Fallback: set user from auth session
+      const { data: authUser } = await supabaseBrowser.auth.getUser();
+      if (authUser.user) {
+        const fallbackUser = {
+          id: authUser.user.id,
+          email: authUser.user.email || '',
+          name: authUser.user.email?.split('@')[0] || 'User',
+          role: 'user' as const,
+          created_at: new Date().toISOString(),
+        };
+        setUser(fallbackUser);
+        console.log('Fallback user set:', fallbackUser);
+      }
     } finally {
       setLoading(false);
     }
