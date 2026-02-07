@@ -580,7 +580,7 @@ export default function TransactionPage() {
                             {getFilteredCustomers().map((customer) => (
                               <CommandItem
                                 key={customer.id}
-                                value={customer.name}
+                                value={`${customer.name} ${customer.phone || ''}`}
                                 onSelect={() => handleCustomerSelect(customer)}
                               >
                                 <Check
