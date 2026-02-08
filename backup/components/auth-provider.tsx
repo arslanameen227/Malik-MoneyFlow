@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { supabaseBrowser } from '@/lib/supabase';
 import { User } from '@/lib/types';
 
@@ -17,6 +17,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     // Check current session
@@ -43,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Failsafe: ensure loading is never stuck for more than 10 seconds
     const timeoutId = setTimeout(() => {
-      if (loading) {
+      if (loadingRef.current) {
         console.log('⏱️ Loading timeout - forcing loading to false');
         setLoading(false);
       }
