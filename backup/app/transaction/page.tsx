@@ -403,16 +403,15 @@ export default function TransactionPage() {
         const { data, error } = await supabaseBrowser
           .from('transactions')
           .insert(transactionData)
-          .select('*, from_account:accounts!from_account_id(*), to_account:accounts!to_account_id(*), customer:customers(*), customer_account:customer_accounts(*)')
-          .single();
+          .select('*, from_account:accounts!from_account_id(*), to_account:accounts!to_account_id(*), customer:customers(*), customer_account:customer_accounts(*)');
 
         if (error) {
           console.error('Supabase error:', error);
           throw new Error(error.message);
         }
         
-        if (data) {
-          await saveLocalTransaction(data);
+        if (data && data.length > 0) {
+          await saveLocalTransaction(data[0]);
           await syncData();
         }
       } else {

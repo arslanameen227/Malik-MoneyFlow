@@ -25,20 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loading]);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // Failsafe: ensure loading is never stuck for more than 5 seconds
+    timeoutId = setTimeout(() => {
+      if (isMounted && loadingRef.current) {
+        console.log('⏱️ Loading timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 5000);
+
     // Check current session
     supabaseBrowser.auth.getSession().then(({ data: { session } }: { data: { session: { user: { id: string } } | null } }) => {
+      if (!isMounted) return;
+      
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session.user.id).finally(() => {
+          if (isMounted) setLoading(false);
+        });
       } else {
         setLoading(false);
       }
     }).catch((error: any) => {
       console.error('Session check error:', error);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
+      if (!isMounted) return;
+      
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -47,15 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Failsafe: ensure loading is never stuck for more than 10 seconds
-    const timeoutId = setTimeout(() => {
-      if (loadingRef.current) {
-        console.log('⏱️ Loading timeout - forcing loading to false');
-        setLoading(false);
-      }
-    }, 10000);
-
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
@@ -74,10 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fetchError) {
         console.error('❌ Profile fetch error:', fetchError);
         // Try to create profile if it doesn't exist
-        await createUserProfile(userId);
+        return await createUserProfile(userId);
       } else if (!existingProfile) {
         console.log('⚠️ No profile found, creating new one...');
-        await createUserProfile(userId);
+        return await createUserProfile(userId);
       } else {
         console.log('✅ Profile found:', existingProfile);
         const { data: authUser } = await supabaseBrowser.auth.getUser();
@@ -88,12 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: existingProfile.role,
           created_at: existingProfile.created_at,
         });
+        return true;
       }
     } catch (error) {
       console.error('❌ Error in fetchUserProfile:', error);
-    } finally {
-      console.log('✅ Setting loading to false');
-      setLoading(false);
+      return false;
     }
   }
 
@@ -115,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (insertError) {
         console.error('❌ Failed to create profile:', insertError);
+        return false;
       } else {
         console.log('✅ Profile created successfully');
         setUser({
@@ -124,9 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: 'user',
           created_at: new Date().toISOString(),
         });
+        return true;
       }
     } catch (error) {
       console.error('❌ Error creating user profile:', error);
+      return false;
     }
   }
 
