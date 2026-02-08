@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabaseBrowser } from '@/lib/supabase';
 import { User } from '@/lib/types';
 
@@ -17,47 +17,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const loadingRef = useRef(true);
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
 
   useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+    let mounted = true;
 
-    // Failsafe: ensure loading is never stuck for more than 5 seconds
-    timeoutId = setTimeout(() => {
-      if (isMounted && loadingRef.current) {
-        console.log('⏱️ Loading timeout - forcing loading to false');
-        setLoading(false);
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabaseBrowser.auth.getSession();
+        
+        if (!mounted) return;
+
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        }
+      } catch (err) {
+        console.error('Auth init error:', err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }, 5000);
+    };
 
-    // Check current session
-    supabaseBrowser.auth.getSession().then(({ data: { session } }: { data: { session: { user: { id: string } } | null } }) => {
-      if (!isMounted) return;
-      
+    initAuth();
+
+    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange(async (_event: string, session: { user: { id: string } } | null) => {
+      if (!mounted) return;
+
       if (session?.user) {
-        fetchUserProfile(session.user.id).finally(() => {
-          if (isMounted) setLoading(false);
-        });
-      } else {
+        await loadUserProfile(session.user.id);
         setLoading(false);
-      }
-    }).catch((error: any) => {
-      console.error('Session check error:', error);
-      if (isMounted) setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
-      if (!isMounted) return;
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
       } else {
         setUser(null);
         setLoading(false);
@@ -65,93 +54,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
     };
   }, []);
 
-  async function fetchUserProfile(userId: string) {
-    console.log('🔍 Fetching profile for user:', userId);
+  async function loadUserProfile(userId: string) {
     try {
-      // Try to get existing profile
-      const { data: existingProfile, error: fetchError } = await supabaseBrowser
+      const { data: profile } = await supabaseBrowser
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error('❌ Profile fetch error:', fetchError);
-        // Try to create profile if it doesn't exist
-        return await createUserProfile(userId);
-      } else if (!existingProfile) {
-        console.log('⚠️ No profile found, creating new one...');
-        return await createUserProfile(userId);
-      } else {
-        console.log('✅ Profile found:', existingProfile);
-        const { data: authUser } = await supabaseBrowser.auth.getUser();
-        setUser({
-          id: userId,
-          email: authUser.user?.email || '',
-          name: existingProfile.name,
-          role: existingProfile.role,
-          created_at: existingProfile.created_at,
-        });
-        return true;
-      }
-    } catch (error) {
-      console.error('❌ Error in fetchUserProfile:', error);
-      return false;
-    }
-  }
+      const { data: { user: authUser } } = await supabaseBrowser.auth.getUser();
 
-  async function createUserProfile(userId: string) {
-    try {
-      const { data: authUser } = await supabaseBrowser.auth.getUser();
-      const userName = authUser.user?.email?.split('@')[0] || 'User';
-      const userEmail = authUser.user?.email || '';
-      
-      console.log('📝 Creating new profile for:', userEmail);
-      
-      const { error: insertError } = await supabaseBrowser
-        .from('profiles')
-        .insert({
-          id: userId,
-          name: userName,
-          role: 'user',
-        });
-      
-      if (insertError) {
-        console.error('❌ Failed to create profile:', insertError);
-        return false;
-      } else {
-        console.log('✅ Profile created successfully');
+      if (profile) {
         setUser({
           id: userId,
-          email: userEmail,
-          name: userName,
-          role: 'user',
-          created_at: new Date().toISOString(),
+          email: authUser?.email || '',
+          name: profile.name,
+          role: profile.role,
+          created_at: profile.created_at,
         });
-        return true;
+      } else {
+        const userName = authUser?.email?.split('@')[0] || 'User';
+        const { error: insertError } = await supabaseBrowser
+          .from('profiles')
+          .insert({ id: userId, name: userName, role: 'user' });
+        
+        if (!insertError) {
+          setUser({
+            id: userId,
+            email: authUser?.email || '',
+            name: userName,
+            role: 'user',
+            created_at: new Date().toISOString(),
+          });
+        }
       }
-    } catch (error) {
-      console.error('❌ Error creating user profile:', error);
-      return false;
+    } catch (err) {
+      console.error('Profile load error:', err);
     }
   }
 
   async function signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const { error } = await supabaseBrowser.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error: error?.message || null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
-    }
+    const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+    return { error: error?.message || null };
   }
 
   async function signUp(email: string, password: string, name: string): Promise<{ error: string | null }> {
@@ -159,36 +108,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabaseBrowser.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: 'https://malik-moneyflow.vercel.app/login',
-        },
+        options: { emailRedirectTo: 'https://malik-moneyflow.vercel.app/login' },
       });
 
-      if (error) {
-        console.error('Auth signup error:', error);
-        return { error: error.message };
-      }
+      if (error) return { error: error.message };
 
       if (data.user) {
-        console.log('User created in auth, creating profile...');
-        // Create profile
-        const { error: profileError } = await supabaseBrowser.from('profiles').insert({
-          id: data.user.id,
-          name,
-          role: 'user',
-        });
+        const { error: profileError } = await supabaseBrowser
+          .from('profiles')
+          .insert({ id: data.user.id, name, role: 'user' });
         
         if (profileError) {
-          console.error('Profile creation error:', profileError);
           return { error: `Database error: ${profileError.message}` };
         }
-        console.log('Profile created successfully');
       }
 
       return { error: null };
-    } catch (error: any) {
-      console.error('SignUp catch error:', error);
-      return { error: error?.message || 'An unexpected error occurred' };
+    } catch (err: any) {
+      return { error: err?.message || 'An unexpected error occurred' };
     }
   }
 
